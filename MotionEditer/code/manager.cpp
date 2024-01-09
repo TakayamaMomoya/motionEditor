@@ -24,6 +24,7 @@
 #include "texture.h"
 #include "field.h"
 #include "motion.h"
+#include "particle.h"
 #include <stdio.h>
 
 //*****************************************************
@@ -152,6 +153,8 @@ HRESULT CManager::Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 	// モーションの生成
 	CMotion *CMotion = CMotion::Create(&aTemp[0]);
 
+	CParticle::Load();
+
 	return S_OK;
 }
 
@@ -160,6 +163,8 @@ HRESULT CManager::Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 //=====================================================
 void CManager::Uninit(void)
 {
+	CParticle::Unload();
+
 	if (m_pRenderer != NULL)
 	{// レンダラーの終了・破棄
 		m_pRenderer->Uninit();

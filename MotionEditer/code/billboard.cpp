@@ -142,9 +142,9 @@ void CBillboard::Draw(void)
 	pDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
 	//アルファテストの有効化
-	pDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-	pDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
-	pDevice->SetRenderState(D3DRS_ALPHAREF, 210);
+	//pDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+	//pDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
+	//pDevice->SetRenderState(D3DRS_ALPHAREF, 210);
 
 	//ワールドマトリックス初期化
 	D3DXMatrixIdentity(&m_mtxWorld);

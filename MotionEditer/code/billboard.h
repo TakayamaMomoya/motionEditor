@@ -36,6 +36,7 @@ public:
 	D3DXVECTOR3 GetPositionOld(void) { return m_posOld; }
 	void SetTex(D3DXVECTOR2 texLeftUp, D3DXVECTOR2 texRightDown);
 	void SetColor(D3DXCOLOR col);
+	D3DXCOLOR GetColor(void) { return m_col; }
 	void SetIdxTexture(int nIdx) { m_nIdxTexture = nIdx; }
 	int GetIdxTexture(void) { return m_nIdxTexture; }
 

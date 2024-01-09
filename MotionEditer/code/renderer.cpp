@@ -197,9 +197,9 @@ void CRenderer::Draw(void)
 		D3DCOLOR_RGBA(0, 0, 0, 0), 1.0f, 0);
 
 	//アルファテストの有効化
-	m_pD3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-	m_pD3DDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
-	m_pD3DDevice->SetRenderState(D3DRS_ALPHAREF, 0);
+	//m_pD3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+	//m_pD3DDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
+	//m_pD3DDevice->SetRenderState(D3DRS_ALPHAREF, 0);
 
 	float fStart = 100;
 	float fEnd = 7000;
