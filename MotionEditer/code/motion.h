@@ -134,6 +134,7 @@ private:
 	Parts *m_apParts[motion::MAX_PARTS];	// パーツの構造体
 	MOTION_INFO m_aMotionInfo[motion::MAX_MOTION];	//モーション情報の構造体
 	KEY m_aKeyOld[motion::MAX_PARTS];	// 前回のキー情報の構造体
+	KEY_INFO m_keyInfoTemp;	// コピー用のキー情報
 	int m_nNumMotion;	//モーションの総数
 	int m_motionType;	//モーションの種類
 	int m_motionTypeOld;	//前回のモーションの種類

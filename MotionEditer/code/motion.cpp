@@ -34,6 +34,7 @@ CMotion::CMotion(int nPriority) : CObject(nPriority)
 	ZeroMemory(&m_aMotionInfo, sizeof(m_aMotionInfo));
 	ZeroMemory(&m_aKeyOld, sizeof(m_aKeyOld));
 	ZeroMemory(&m_apParts[0], sizeof(m_apParts));
+	ZeroMemory(&m_keyInfoTemp, sizeof(m_keyInfoTemp));
 	m_bLoopMotion = false;
 	m_motionType = 0;
 	m_motionTypeOld = 0;
@@ -269,8 +270,28 @@ void CMotion::Input(void)
 				m_aMotionInfo[m_motionType].nNumKey--;
 			}
 		}
-
 		// キーの増減============================================
+
+		// キーのコピペ============================================
+		if (pKeyboard->GetTrigger(DIK_F6))
+		{// コピー
+			m_keyInfoTemp = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey];
+		}
+		if (pKeyboard->GetTrigger(DIK_F7))
+		{// ペースト
+			m_aMotionInfo[m_motionType].aKeyInfo[m_nKey] = m_keyInfoTemp;
+
+			// ポーズ初期設定
+			SetPose();
+		}
+		if (pKeyboard->GetTrigger(DIK_RETURN))
+		{// ポーズリセット
+			ZeroMemory(&m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey, sizeof(KEY) * motion::MAX_PARTS);
+
+			// ポーズ初期設定
+			SetPose();
+		}
+		// キーのコピペ============================================
 
 		// パーツの動き============================================
 		if (pKeyboard->GetPress(DIK_T))
