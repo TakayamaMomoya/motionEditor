@@ -15,10 +15,14 @@
 #include "object.h"
 
 //*****************************************************
-// マクロ定義
+// 定数定義
 //*****************************************************
-#define MAX_PARTS	(20)	// パーツの最大数
-#define MAX_MOTION	(40)	// モーションの最大数
+namespace motion
+{
+const int MAX_PARTS = 24;	// パーツの最大数
+const int MAX_KEY = 24;	// キーの最大数
+const int MAX_MOTION = 24;	// モーションの最大数
+}
 
 //*****************************************************
 // クラスの定義
@@ -41,7 +45,7 @@ public:
 	typedef struct
 	{
 		int nFrame;					//再生フレーム
-		KEY aKey[MAX_PARTS];			//各モデルのキー要素
+		KEY aKey[motion::MAX_PARTS];			//各モデルのキー要素
 	}KEY_INFO;
 
 	typedef struct
@@ -63,11 +67,10 @@ public:
 	{
 		bool bLoop;						//ループするかどうか
 		int nNumKey;					//キーの総数
-		KEY_INFO aKeyInfo[MAX_PARTS];	//キー情報
+		KEY_INFO aKeyInfo[motion::MAX_PARTS];	//キー情報
 		int nNumEvent;	// パーティクルの数
 		int nNumCollision;	// 当たり判定の数
 		EVENT_INFO *pEvent;	// パーティクルのポインタ
-		COLLISION_INFO *pCollision;	// 当たり判定のポインタ
 	}MOTION_INFO;
 
 	// パーツの構造体
@@ -128,9 +131,9 @@ private:
 	void SaveMotion(void);
 	void Reset(void);
 
-	Parts *m_apParts[MAX_PARTS];	// パーツの構造体
-	MOTION_INFO m_aMotionInfo[MAX_MOTION];	//モーション情報の構造体
-	KEY m_aKeyOld[MAX_PARTS];	// 前回のキー情報の構造体
+	Parts *m_apParts[motion::MAX_PARTS];	// パーツの構造体
+	MOTION_INFO m_aMotionInfo[motion::MAX_MOTION];	//モーション情報の構造体
+	KEY m_aKeyOld[motion::MAX_PARTS];	// 前回のキー情報の構造体
 	int m_nNumMotion;	//モーションの総数
 	int m_motionType;	//モーションの種類
 	int m_motionTypeOld;	//前回のモーションの種類

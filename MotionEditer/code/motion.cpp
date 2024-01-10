@@ -76,7 +76,7 @@ HRESULT CMotion::Init(void)
 //=====================================================
 void CMotion::Uninit(void)
 {
-	for (int nCntMotion = 0; nCntMotion < MAX_MOTION; nCntMotion++)
+	for (int nCntMotion = 0; nCntMotion < motion::MAX_MOTION; nCntMotion++)
 	{// パーティクル情報の破棄
 		if (m_aMotionInfo[nCntMotion].pEvent != nullptr)
 		{
@@ -136,6 +136,11 @@ void CMotion::Input(void)
 	if (pKeyboard->GetTrigger(DIK_F2))
 	{// モーションするかの切り替え
 		m_bMotion = m_bMotion ? false : true;
+
+		if (m_bMotion)
+		{// ポーズのリセット
+			InitPose(m_motionType);
+		}
 	}
 
 	if (pKeyboard->GetTrigger(DIK_F3))
@@ -244,9 +249,28 @@ void CMotion::Input(void)
 
 			// ポーズ初期設定
 			SetPose();
-
 		}
 		// 選択============================================
+
+		// キーの増減============================================
+		if (pKeyboard->GetTrigger(DIK_I))
+		{// キーを増やす
+			if (m_nNumKey < motion::MAX_KEY - 1)
+			{
+				m_nNumKey++;
+				m_aMotionInfo[m_motionType].nNumKey++;
+			}
+		}
+		else if (pKeyboard->GetTrigger(DIK_K))
+		{// キーを減らす
+			if (m_nNumKey > 0)
+			{
+				m_nNumKey--;
+				m_aMotionInfo[m_motionType].nNumKey--;
+			}
+		}
+
+		// キーの増減============================================
 
 		// パーツの動き============================================
 		if (pKeyboard->GetPress(DIK_T))
@@ -427,7 +451,10 @@ void CMotion::Motion(void)
 	{//キーのフレーム数に達したら
 		if (m_nKey < m_aMotionInfo[m_motionType].nNumKey)
 		{
-			m_nKey++;
+			if (m_nKey < m_aMotionInfo[m_motionType].nNumKey - 1)
+			{
+				m_nKey++;
+			}
 
 			if (m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame <= 0)
 			{
@@ -526,6 +553,9 @@ void CMotion::InitPose(int nMotion)
 			//m_apParts[nCntPart]->pParts->SetPosition(pos);
 		}
 	}
+
+	// キー情報保存
+	SetKeyOld();
 }
 
 //=====================================================
@@ -719,7 +749,7 @@ void CMotion::DrawMotionState(void)
 	CManager::GetDebugProc()->Print("// パーツ情報\n");
 	CManager::GetDebugProc()->Print("//===============================\n");
 
-	for (int nCntModel = 0; nCntModel < MAX_PARTS; nCntModel++)
+	for (int nCntModel = 0; nCntModel < motion::MAX_PARTS; nCntModel++)
 	{// モデル数分の情報表示
 		pos = m_apParts[nIdx]->pParts->GetPosition();
 		rot = m_apParts[nIdx]->pParts->GetRot();
@@ -756,6 +786,8 @@ void CMotion::SetPose(void)
 		m_apParts[nCntPart]->pParts->SetRot(rot);
 		m_apParts[nCntPart]->pParts->SetPosition(pos);
 	}
+
+	SetKeyOld();
 }
 
 //=====================================================
@@ -1259,6 +1291,7 @@ void CMotion::SaveMotion(void)
 			fprintf(pFile, "        ROT = 0.0 0.0 0.0\n");
 			fprintf(pFile, "    END_PARTSSET\n");
 		}
+
 		fprintf(pFile, "END_CHARACTERSET\n\n");
 
 		fprintf(pFile, "#====================================================================\n");
@@ -1274,16 +1307,16 @@ void CMotion::SaveMotion(void)
 			fprintf(pFile, "    NUM_KEY = %d\n", m_aMotionInfo[nCntMotion].nNumKey);
 
 			if (m_aMotionInfo[nCntMotion].pEvent != NULL)
-			{// パーティクルを設定するなら
-				fprintf(pFile, "    NUM_PARTICLE = %d\n", m_aMotionInfo[nCntMotion].nNumEvent);
+			{// イベント情報書き出し
+				fprintf(pFile, "    NUM_EVENT = %d\n", m_aMotionInfo[nCntMotion].nNumEvent);
 				for (int nCntParticle = 0; nCntParticle < m_aMotionInfo[nCntMotion].nNumEvent; nCntParticle++)
 				{
 					fprintf(pFile, "\n");
 
-					fprintf(pFile, "    PARTICLESET\n");
+					fprintf(pFile, "    EVENTSET\n");
 					fprintf(pFile, "        KEY = %d\n", m_aMotionInfo[nCntMotion].pEvent[nCntParticle].nKey);
 					fprintf(pFile, "        FRAME = %d\n", m_aMotionInfo[nCntMotion].pEvent[nCntParticle].nFrame);
-					fprintf(pFile, "    END_PARTICLESET\n");
+					fprintf(pFile, "    END_EVENTSET\n");
 				}
 			}
 
