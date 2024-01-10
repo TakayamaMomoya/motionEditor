@@ -78,10 +78,10 @@ void CMotion::Uninit(void)
 {
 	for (int nCntMotion = 0; nCntMotion < MAX_MOTION; nCntMotion++)
 	{// パーティクル情報の破棄
-		if (m_aMotionInfo[nCntMotion].pParticle != nullptr)
+		if (m_aMotionInfo[nCntMotion].pEvent != nullptr)
 		{
-			delete m_aMotionInfo[nCntMotion].pParticle;
-			m_aMotionInfo[nCntMotion].pParticle = nullptr;
+			delete m_aMotionInfo[nCntMotion].pEvent;
+			m_aMotionInfo[nCntMotion].pEvent = nullptr;
 		}
 	}
 
@@ -322,18 +322,14 @@ void CMotion::Motion(void)
 	// パーツのトランスフォーム
 	D3DXVECTOR3 pos, rot;
 
-	if (m_aMotionInfo[m_motionType].pParticle != nullptr)
+	if (m_aMotionInfo[m_motionType].pEvent != nullptr)
 	{
-		for (int nCntParticle = 0; nCntParticle < m_aMotionInfo[m_motionType].nNumParticle; nCntParticle++)
+		for (int nCntParticle = 0; nCntParticle < m_aMotionInfo[m_motionType].nNumEvent; nCntParticle++)
 		{// 全てのパーティクルを確認
-			if (m_nKey == m_aMotionInfo[m_motionType].pParticle[nCntParticle].nKey &&
-				m_nCounterMotion == m_aMotionInfo[m_motionType].pParticle[nCntParticle].nFrame)
-			{// パーティクル生成
-				// 親パーツの位置取得
-				D3DXMATRIX *pMtx = m_apParts[m_aMotionInfo[m_motionType].pParticle[nCntParticle].nIdxParent]->pParts->GetMatrix();
-				pos = D3DXVECTOR3(pMtx->_41, pMtx->_42, pMtx->_43) + m_aMotionInfo[m_motionType].pParticle[nCntParticle].offset;
+			if (m_nKey == m_aMotionInfo[m_motionType].pEvent[nCntParticle].nKey &&
+				m_nCounterMotion == m_aMotionInfo[m_motionType].pEvent[nCntParticle].nFrame)
+			{// イベントの呼び出し
 
-				CParticle::Create(pos, (CParticle::TYPE)m_aMotionInfo[m_motionType].pParticle[nCntParticle].nType);
 			}
 		}
 	}
@@ -919,19 +915,19 @@ void CMotion::Load(char *pPath)
 					{//パーティクル数判断
 						(void)fscanf(pFile, "%s", &cTemp[0]);
 
-						(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].nNumParticle);
+						(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].nNumEvent);
 
-						if (m_aMotionInfo[m_nNumMotion].nNumParticle != 0)
+						if (m_aMotionInfo[m_nNumMotion].nNumEvent != 0)
 						{
 							// パーティクル情報を生成
-							m_aMotionInfo[m_nNumMotion].pParticle = new PARTICLE_INFO[m_aMotionInfo[m_nNumMotion].nNumParticle];
+							m_aMotionInfo[m_nNumMotion].pEvent = new EVENT_INFO[m_aMotionInfo[m_nNumMotion].nNumEvent];
 
 							// パーティクル情報初期化
-							ZeroMemory(m_aMotionInfo[m_nNumMotion].pParticle, sizeof(PARTICLE_INFO) * m_aMotionInfo[m_nNumMotion].nNumParticle);
+							ZeroMemory(m_aMotionInfo[m_nNumMotion].pEvent, sizeof(EVENT_INFO) * m_aMotionInfo[m_nNumMotion].nNumEvent);
 						}
 					}
 
-					if (strcmp(cTemp, "PARTICLESET") == 0 && m_aMotionInfo[m_nNumMotion].pParticle != 0)
+					if (strcmp(cTemp, "PARTICLESET") == 0 && m_aMotionInfo[m_nNumMotion].pEvent != 0)
 					{// パーティクル情報設定
 						while (strcmp(cTemp, "END_PARTICLESET") != 0)
 						{//終わりまでパーティクル設定
@@ -941,40 +937,14 @@ void CMotion::Load(char *pPath)
 							{// 再生キー取得
 								(void)fscanf(pFile, "%s", &cTemp[0]);
 
-								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pParticle[nCntParticle].nKey);
+								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pEvent[nCntParticle].nKey);
 							}
 
 							if (strcmp(cTemp, "FRAME") == 0)
 							{// 再生フレーム取得
 								(void)fscanf(pFile, "%s", &cTemp[0]);
 
-								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pParticle[nCntParticle].nFrame);
-							}
-
-							if (strcmp(cTemp, "TYPE") == 0)
-							{// 種類取得
-								(void)fscanf(pFile, "%s", &cTemp[0]);
-
-								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pParticle[nCntParticle].nType);
-							}
-
-							if (strcmp(cTemp, "POS") == 0)
-							{//位置読み込み
-								D3DXVECTOR3 pos;
-
-								(void)fscanf(pFile, "%s", &cTemp[0]);
-
-								for (int nCntPos = 0; nCntPos < 3; nCntPos++)
-								{
-									(void)fscanf(pFile, "%f", &m_aMotionInfo[m_nNumMotion].pParticle[nCntParticle].offset[nCntPos]);
-								}
-							}
-
-							if (strcmp(cTemp, "PARENT") == 0)
-							{// 親パーツ番号取得
-								(void)fscanf(pFile, "%s", &cTemp[0]);
-
-								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pParticle[nCntParticle].nIdxParent);
+								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pEvent[nCntParticle].nFrame);
 							}
 						}
 
@@ -1303,26 +1273,16 @@ void CMotion::SaveMotion(void)
 			fprintf(pFile, "    LOOP = %d\n", (int)m_aMotionInfo[nCntMotion].bLoop);
 			fprintf(pFile, "    NUM_KEY = %d\n", m_aMotionInfo[nCntMotion].nNumKey);
 
-			if (m_aMotionInfo[nCntMotion].pParticle != NULL)
+			if (m_aMotionInfo[nCntMotion].pEvent != NULL)
 			{// パーティクルを設定するなら
-				fprintf(pFile, "    NUM_PARTICLE = %d\n", m_aMotionInfo[nCntMotion].nNumParticle);
-				for (int nCntParticle = 0; nCntParticle < m_aMotionInfo[nCntMotion].nNumParticle; nCntParticle++)
+				fprintf(pFile, "    NUM_PARTICLE = %d\n", m_aMotionInfo[nCntMotion].nNumEvent);
+				for (int nCntParticle = 0; nCntParticle < m_aMotionInfo[nCntMotion].nNumEvent; nCntParticle++)
 				{
-					pos =
-					{// 位置保存
-						m_aMotionInfo[nCntMotion].pParticle[nCntParticle].offset.x,
-						m_aMotionInfo[nCntMotion].pParticle[nCntParticle].offset.y,
-						m_aMotionInfo[nCntMotion].pParticle[nCntParticle].offset.z,
-					};
-
 					fprintf(pFile, "\n");
 
 					fprintf(pFile, "    PARTICLESET\n");
-					fprintf(pFile, "        KEY = %d\n", m_aMotionInfo[nCntMotion].pParticle[nCntParticle].nKey);
-					fprintf(pFile, "        FRAME = %d\n", m_aMotionInfo[nCntMotion].pParticle[nCntParticle].nFrame);
-					fprintf(pFile, "        TYPE = %d\n", m_aMotionInfo[nCntMotion].pParticle[nCntParticle].nType);
-					fprintf(pFile, "        POS = %.2f %.2f %.2f\n", pos.x, pos.y, pos.z);
-					fprintf(pFile, "        PARENT = %d\n", m_aMotionInfo[nCntMotion].pParticle[nCntParticle].nIdxParent);
+					fprintf(pFile, "        KEY = %d\n", m_aMotionInfo[nCntMotion].pEvent[nCntParticle].nKey);
+					fprintf(pFile, "        FRAME = %d\n", m_aMotionInfo[nCntMotion].pEvent[nCntParticle].nFrame);
 					fprintf(pFile, "    END_PARTICLESET\n");
 				}
 			}

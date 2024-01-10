@@ -48,10 +48,7 @@ public:
 	{// パーティクル情報構造体
 		int nKey;	//生成するキー
 		int nFrame;	//生成するフレーム
-		int nType;	// 種類
-		D3DXVECTOR3 offset;	// オフセット位置
-		int nIdxParent;	// 親となるパーツの番号
-	}PARTICLE_INFO;
+	}EVENT_INFO;
 	
 	typedef struct
 	{// 当たり判定情報構造体
@@ -67,9 +64,9 @@ public:
 		bool bLoop;						//ループするかどうか
 		int nNumKey;					//キーの総数
 		KEY_INFO aKeyInfo[MAX_PARTS];	//キー情報
-		int nNumParticle;	// パーティクルの数
+		int nNumEvent;	// パーティクルの数
 		int nNumCollision;	// 当たり判定の数
-		PARTICLE_INFO *pParticle;	// パーティクルのポインタ
+		EVENT_INFO *pEvent;	// パーティクルのポインタ
 		COLLISION_INFO *pCollision;	// 当たり判定のポインタ
 	}MOTION_INFO;
 
@@ -119,6 +116,8 @@ public:
 	void InitPose(int nMotion);
 	void EnableShadow(bool bShadow) { m_bShadow = bShadow; }
 	void EnableIndependent(bool bInde) { m_bInde = bInde; }
+	EVENT_INFO *GetInfoEvent(int nMotion) { return m_aMotionInfo[nMotion].pEvent; }
+	int GetNumEventInfo(int nMotion) { return m_aMotionInfo[nMotion].nNumEvent; }
 
 private:
 	void Motion(void);
