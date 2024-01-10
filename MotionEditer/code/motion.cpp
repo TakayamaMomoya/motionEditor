@@ -114,7 +114,7 @@ void CMotion::Update(void)
 		Input();
 	}
 
-	if (pKeyboard->GetTrigger(DIK_F7))
+	if (pKeyboard->GetTrigger(DIK_F8))
 	{// 保存
 		SaveMotion();
 	}
@@ -441,12 +441,12 @@ void CMotion::Motion(void)
 
 	if (m_aMotionInfo[m_motionType].pEvent != nullptr)
 	{
-		for (int nCntParticle = 0; nCntParticle < m_aMotionInfo[m_motionType].nNumEvent; nCntParticle++)
-		{// 全てのパーティクルを確認
-			if (m_nKey == m_aMotionInfo[m_motionType].pEvent[nCntParticle].nKey &&
-				m_nCounterMotion == m_aMotionInfo[m_motionType].pEvent[nCntParticle].nFrame)
+		for (int nCntEvent = 0; nCntEvent < m_aMotionInfo[m_motionType].nNumEvent; nCntEvent++)
+		{
+			if (m_nKey == m_aMotionInfo[m_motionType].pEvent[nCntEvent].nKey &&
+				m_nCounterMotion == m_aMotionInfo[m_motionType].pEvent[nCntEvent].nFrame)
 			{// イベントの呼び出し
-
+				Event(&m_aMotionInfo[m_motionType].pEvent[nCntEvent]);
 			}
 		}
 	}
@@ -667,6 +667,11 @@ void CMotion::Reset(void)
 //=====================================================
 void CMotion::SetTransform(void)
 {
+	if (m_nKey == -1)
+	{
+		return;
+	}
+
 	// 向きの設定
 	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[m_nIdxParts].fRotX = m_apParts[m_nIdxParts]->pParts->GetRot().x;
 	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[m_nIdxParts].fRotY = m_apParts[m_nIdxParts]->pParts->GetRot().y;
@@ -821,7 +826,7 @@ void CMotion::DrawMotionState(void)
 	}
 
 	CManager::GetDebugProc()->Print("[F3]セットアップモードに移行\n");
-	CManager::GetDebugProc()->Print("[F7]保存[data\\motion.txt]\n");
+	CManager::GetDebugProc()->Print("[F8]保存[data\\motion.txt]\n");
 
 	if (m_bSetUp)
 	{
@@ -1013,7 +1018,7 @@ void CMotion::Load(char *pPath)
 			//変数宣言
 			int nCntKey = 0;
 			int nCntPart = 0;
-			int nCntParticle = 0;
+			int nCntEvent = 0;
 
 			//モーション設定===========================================
 			if (strcmp(cTemp, "MOTIONSET") == 0)
@@ -1037,104 +1042,64 @@ void CMotion::Load(char *pPath)
 						(void)fscanf(pFile, "%d", &m_aMotionInfo[nCntMotion].nNumKey);
 					}
 
-					if (strcmp(cTemp, "NUM_PARTICLE") == 0)
-					{//パーティクル数判断
+					if (strcmp(cTemp, "NUM_EVENT") == 0)
+					{// イベント数判断
 						(void)fscanf(pFile, "%s", &cTemp[0]);
 
 						(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].nNumEvent);
 
 						if (m_aMotionInfo[m_nNumMotion].nNumEvent != 0)
-						{
-							// パーティクル情報を生成
+						{// イベント情報を生成
 							m_aMotionInfo[m_nNumMotion].pEvent = new EVENT_INFO[m_aMotionInfo[m_nNumMotion].nNumEvent];
 
-							// パーティクル情報初期化
 							ZeroMemory(m_aMotionInfo[m_nNumMotion].pEvent, sizeof(EVENT_INFO) * m_aMotionInfo[m_nNumMotion].nNumEvent);
 						}
 					}
 
-					if (strcmp(cTemp, "PARTICLESET") == 0 && m_aMotionInfo[m_nNumMotion].pEvent != 0)
-					{// パーティクル情報設定
-						while (strcmp(cTemp, "END_PARTICLESET") != 0)
-						{//終わりまでパーティクル設定
+					if (strcmp(cTemp, "EVENTSET") == 0 && m_aMotionInfo[m_nNumMotion].pEvent != 0)
+					{// イベント情報設定
+						while (strcmp(cTemp, "END_EVENTSET") != 0)
+						{
 							(void)fscanf(pFile, "%s", &cTemp[0]);
 
 							if (strcmp(cTemp, "KEY") == 0)
 							{// 再生キー取得
 								(void)fscanf(pFile, "%s", &cTemp[0]);
 
-								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pEvent[nCntParticle].nKey);
+								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pEvent[nCntEvent].nKey);
 							}
 
 							if (strcmp(cTemp, "FRAME") == 0)
 							{// 再生フレーム取得
 								(void)fscanf(pFile, "%s", &cTemp[0]);
 
-								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pEvent[nCntParticle].nFrame);
+								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pEvent[nCntEvent].nFrame);
+							}
+
+							if (strcmp(cTemp, "POS") == 0)
+							{//位置読み込み
+								D3DXVECTOR3 pos;
+
+								(void)fscanf(pFile, "%s", &cTemp[0]);
+
+								for (int nCntPos = 0; nCntPos < 3; nCntPos++)
+								{
+									(void)fscanf(pFile, "%f", &pos[nCntPos]);
+								}
+
+								m_aMotionInfo[m_nNumMotion].pEvent[nCntEvent].offset = pos;
+							}
+
+							if (strcmp(cTemp, "PARENT") == 0)
+							{// 親パーツ番号取得
+								(void)fscanf(pFile, "%s", &cTemp[0]);
+
+								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pEvent[nCntEvent].nIdxParent);
 							}
 						}
 
-						nCntParticle++;
+						nCntEvent++;
 					}
-
-					//if (strcmp(cTemp, "NUM_COLLISION") == 0)
-					//{// 当たり判定数判断
-					//	(void)fscanf(pFile, "%s", &cTemp[0]);
-
-					//	(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].nNumCollision);
-
-					//	if (m_aMotionInfo[m_nNumMotion].nNumCollision != 0)
-					//	{
-					//		// 当たり判定情報を生成
-					//		m_aMotionInfo[m_nNumMotion].pCollision = new COLLISION_INFO[m_aMotionInfo[m_nNumMotion].nNumCollision];
-
-					//		// 当たり判定情報初期化
-					//		ZeroMemory(m_aMotionInfo[m_nNumMotion].pCollision, sizeof(COLLISION_INFO) * m_aMotionInfo[m_nNumMotion].nNumCollision);
-					//	}
-					//}
-
-					//if (strcmp(cTemp, "COLLISIONSET") == 0 && m_aMotionInfo[m_nNumMotion].pCollision != 0)
-					//{// 当たり判定情報設定
-					//	while (strcmp(cTemp, "END_COLLISIONSET") != 0)
-					//	{//終わりまで当たり判定設定
-					//		(void)fscanf(pFile, "%s", &cTemp[0]);
-
-					//		if (strcmp(cTemp, "KEY") == 0)
-					//		{// 再生キー取得
-					//			(void)fscanf(pFile, "%s", &cTemp[0]);
-
-					//			(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pParticle[nCntParticle].nKey);
-					//		}
-
-					//		if (strcmp(cTemp, "FRAME") == 0)
-					//		{// 再生フレーム取得
-					//			(void)fscanf(pFile, "%s", &cTemp[0]);
-
-					//			(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pParticle[nCntParticle].nFrame);
-					//		}
-
-					//		if (strcmp(cTemp, "POS") == 0)
-					//		{//位置読み込み
-					//			D3DXVECTOR3 pos;
-
-					//			(void)fscanf(pFile, "%s", &cTemp[0]);
-
-					//			for (int nCntPos = 0; nCntPos < 3; nCntPos++)
-					//			{
-					//				(void)fscanf(pFile, "%f", &m_aMotionInfo[m_nNumMotion].pParticle[nCntParticle].offset[nCntPos]);
-					//			}
-					//		}
-
-					//		if (strcmp(cTemp, "PARENT") == 0)
-					//		{// 親パーツ番号取得
-					//			(void)fscanf(pFile, "%s", &cTemp[0]);
-
-					//			(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pParticle[nCntParticle].nIdxParent);
-					//		}
-					//	}
-
-					//	nCntParticle++;
-					//}
 
 					if (strcmp(cTemp, "KEYSET") == 0)
 					{//キースタート
