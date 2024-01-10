@@ -222,7 +222,7 @@ void CMotion::Input(void)
 			if (m_bMotion == false)
 			{
 				// ポーズ初期設定
-				SetPose();
+				InitPose(m_motionType);
 			}
 		}
 		else if (pKeyboard->GetTrigger(DIK_LEFT))
@@ -233,7 +233,7 @@ void CMotion::Input(void)
 			if (m_bMotion == false)
 			{
 				// ポーズ初期設定
-				SetPose();
+				InitPose(m_motionType);
 			}
 		}
 
@@ -272,6 +272,27 @@ void CMotion::Input(void)
 		}
 		// キーの増減============================================
 
+		// フレームの増減============================================
+		if (m_nKey != -1)
+		{
+			if (pKeyboard->GetRepeat(DIK_O) % 5 == 0 && pKeyboard->GetRepeat(DIK_O) != 0)
+			{// フレームを増やす
+				m_nFrame++;
+				m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame++;
+			}
+			else if (pKeyboard->GetRepeat(DIK_L) % 5 == 0 && pKeyboard->GetRepeat(DIK_L) != 0)
+			{// フレームを減らす
+				m_nFrame--;
+				m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame--;
+
+				if (m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame < 1)
+				{
+					m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame = 1;
+				}
+			}
+		}
+		// フレームの増減============================================
+
 		// キーのコピペ============================================
 		if (pKeyboard->GetTrigger(DIK_F6))
 		{// コピー
@@ -294,6 +315,53 @@ void CMotion::Input(void)
 		// キーのコピペ============================================
 
 		// パーツの動き============================================
+		pos = m_apParts[m_nIdxParts]->pParts->GetPosition();
+		// 移動=======================
+		if (pKeyboard->GetPress(DIK_W))
+		{// Z軸移動
+			pos.z += MOVE_SPEED;
+
+			// パーツのトランスフォームを一時保存
+			SetTransform();
+		}
+		else if (pKeyboard->GetPress(DIK_S))
+		{
+			pos.z -= MOVE_SPEED;
+
+			// パーツのトランスフォームを一時保存
+			SetTransform();
+		}
+		if (pKeyboard->GetPress(DIK_D))
+		{// X軸移動
+			pos.x += MOVE_SPEED;
+
+			// パーツのトランスフォームを一時保存
+			SetTransform();
+		}
+		else if (pKeyboard->GetPress(DIK_A))
+		{
+			pos.x -= MOVE_SPEED;
+
+			// パーツのトランスフォームを一時保存
+			SetTransform();
+		}
+		if (pKeyboard->GetPress(DIK_E))
+		{// Y軸移動
+			pos.y += MOVE_SPEED;
+
+			// パーツのトランスフォームを一時保存
+			SetTransform();
+		}
+		else if (pKeyboard->GetPress(DIK_Q))
+		{
+			pos.y -= MOVE_SPEED;
+
+			// パーツのトランスフォームを一時保存
+			SetTransform();
+		}
+		// 移動=======================
+		
+		// 回転=======================
 		if (pKeyboard->GetPress(DIK_T))
 		{// X軸回転
 			rot.x += ROLL_SPEED;
@@ -338,11 +406,13 @@ void CMotion::Input(void)
 			// パーツのトランスフォームを一時保存
 			SetTransform();
 		}
+		// 回転=======================
 		// パーツの動き============================================
 	}
 
-	// 向き設定
+	// トランスフォーム設定
 	m_apParts[m_nIdxParts]->pParts->SetRot(m_apParts[m_nIdxParts]->pParts->GetRot() + rot);
+	m_apParts[m_nIdxParts]->pParts->SetPosition(pos);
 }
 
 //=====================================================
@@ -354,9 +424,6 @@ void CMotion::Motion(void)
 	{
 		return;
 	}
-
-	// 汎用処理取得
-	
 
 	// 現在の位置を保存
 	m_posOld = m_pos;
