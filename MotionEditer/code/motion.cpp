@@ -243,6 +243,8 @@ void CMotion::Input(void)
 
 			// ポーズ初期設定
 			SetPose();
+
+			m_nFrame = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame;
 		}
 		else if (pKeyboard->GetTrigger(DIK_1))
 		{
@@ -250,6 +252,8 @@ void CMotion::Input(void)
 
 			// ポーズ初期設定
 			SetPose();
+
+			m_nFrame = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame;
 		}
 		// 選択============================================
 
@@ -288,6 +292,7 @@ void CMotion::Input(void)
 				if (m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame < 1)
 				{
 					m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame = 1;
+					m_nFrame = 1;
 				}
 			}
 		}
@@ -832,6 +837,7 @@ void CMotion::DrawMotionState(void)
 	CManager::GetDebugProc()->Print("選択パーツ[%d / %d]\n", m_nIdxParts, m_nNumParts - 1);
 	CManager::GetDebugProc()->Print("選択モーション[%d / %d]\n", m_motionType, m_nNumMotion - 1);
 	CManager::GetDebugProc()->Print("選択キー[%d / %d]\n", m_nKey, m_aMotionInfo[m_motionType].nNumKey - 1);
+	CManager::GetDebugProc()->Print("フレーム数[%d]\n", m_nFrame);
 
 	CManager::GetDebugProc()->Print("//===============================\n");
 	CManager::GetDebugProc()->Print("// パーツ情報\n");
