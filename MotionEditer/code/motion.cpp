@@ -379,9 +379,10 @@ void CMotion::Input(void)
         rot = m_apParts[m_nIdxParts]->pParts->GetRot();
 
         // 回転
-        ImGui::SliderFloat("rot.x", &rot.x, -D3DX_PI, D3DX_PI);
-        ImGui::SliderFloat("rot.y", &rot.y, -D3DX_PI, D3DX_PI);
-        ImGui::SliderFloat("rot.z", &rot.z, -D3DX_PI, D3DX_PI);
+        ImGui::DragFloat("rot.x", &rot.x, 0.01f, -D3DX_PI, D3DX_PI);
+        ImGui::DragFloat("rot.y", &rot.y, 0.01f, -D3DX_PI, D3DX_PI);
+        ImGui::DragFloat("rot.z", &rot.z, 0.01f, -D3DX_PI, D3DX_PI);
+
 
         // パーツのトランスフォームを一時保存
         SetTransform();
