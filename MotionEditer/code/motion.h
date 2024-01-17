@@ -160,6 +160,7 @@ private:
 	int m_nIdxParts;
 	bool m_bMotion;
 	bool m_bSetUp;
+    char m_aPathSave[256];    // •Û‘¶ƒpƒX
 };
 
 #endif

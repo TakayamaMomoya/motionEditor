@@ -18,6 +18,7 @@
 #include "universal.h"
 #include "inputkeyboard.h"
 #include "inputmouse.h"
+#include <string.h>
 
 //*****************************************************
 // マクロ定義
@@ -52,6 +53,7 @@ CMotion::CMotion(int nPriority) : CObject(nPriority)
 	m_move = { 0.0f,0.0f,0.0f };
 	m_col = { 1.0f,1.0f,1.0f,1.0f };
 	m_bInde = false;
+    ZeroMemory(&m_aPathSave[0], sizeof(m_apParts));
 }
 
 //=====================================================
@@ -69,6 +71,9 @@ HRESULT CMotion::Init(void)
 {
 	SetMotion(0);
 	InitPose(0);
+
+    strcpy(&m_aPathSave[0], "data\\motion.txt");
+
 	return S_OK;
 }
 
@@ -109,15 +114,18 @@ void CMotion::Update(void)
 		Motion();
 	}
 
-	if (pMouse->GetPress(CInputMouse::BUTTON_RMB) == false)
-	{// 入力処理
-		Input();
-	}
+    // 入力処理
+	Input();
 
 	if (pKeyboard->GetTrigger(DIK_F8))
 	{// 保存
 		SaveMotion();
 	}
+
+    if (pMouse->GetPress(CInputMouse::BUTTON_RMB) == false)
+    {
+        ImGui::InputText("save path", &m_aPathSave[0], sizeof(m_aPathSave));
+    }
 
 	DrawMotionState();
 }
@@ -127,41 +135,38 @@ void CMotion::Update(void)
 //=====================================================
 void CMotion::Input(void)
 {
-	// 変数宣言
-	D3DXVECTOR3 rot = { 0.0f,0.0f,0.0f };
-	D3DXVECTOR3 pos = { 0.0f,0.0f,0.0f };
+    // 変数宣言
+    D3DXVECTOR3 rot = { 0.0f,0.0f,0.0f };
+    D3DXVECTOR3 pos = { 0.0f,0.0f,0.0f };
 
-	// 入力情報入手
-	CInputKeyboard *pKeyboard = CManager::GetKeyboard();
+    // 入力情報入手
+    CInputKeyboard *pKeyboard = CManager::GetKeyboard();
 
-	if (pKeyboard->GetTrigger(DIK_F2))
-	{// モーションするかの切り替え
-		m_bMotion = m_bMotion ? false : true;
+    if (pKeyboard->GetTrigger(DIK_F2))
+    {// モーションするかの切り替え
+        m_bMotion = m_bMotion ? false : true;
 
-		if (m_bMotion)
-		{// ポーズのリセット
-			InitPose(m_motionType);
-		}
-	}
+        if (m_bMotion)
+        {// ポーズのリセット
+            InitPose(m_motionType);
+        }
+    }
 
-	if (pKeyboard->GetTrigger(DIK_F3))
-	{// セットアップするかの切り替え
-		if (m_bSetUp)
-		{
-			m_bSetUp = false;
-		}
-		else
-		{
-			Reset();
-			m_bSetUp = true;
-		}
-	}
+    if (pKeyboard->GetTrigger(DIK_F3))
+    {// セットアップするかの切り替え
+        if (m_bSetUp)
+        {
+            m_bSetUp = false;
+        }
+        else
+        {
+            Reset();
+            m_bSetUp = true;
+        }
+    }
 
-	// 選択============================================
-	
-	// パーツの選択
     if (ImGui::Button("PATRS_UP", ImVec2(100.0f, 20.0f)))
-    {
+    {// パーツ切り替え
         m_apParts[m_nIdxParts]->pParts->SetCurrent(false);
 
         m_nIdxParts = (m_nIdxParts + m_nNumParts - 1) % m_nNumParts;
@@ -170,226 +175,165 @@ void CMotion::Input(void)
     }
 
     if (ImGui::Button("PATRS_DOWN", ImVec2(100.0f, 20.0f)))
-    {
-		m_apParts[m_nIdxParts]->pParts->SetCurrent(false);
+    {// パーツ切り替え
+        m_apParts[m_nIdxParts]->pParts->SetCurrent(false);
 
-		m_nIdxParts = (m_nIdxParts + 1) % m_nNumParts;
+        m_nIdxParts = (m_nIdxParts + 1) % m_nNumParts;
 
-		m_apParts[m_nIdxParts]->pParts->SetCurrent(true);
-	}
+        m_apParts[m_nIdxParts]->pParts->SetCurrent(true);
+    }
 
-	if (m_bSetUp)
-	{// セットアップかどうか
-		if (pKeyboard->GetPress(DIK_W))
-		{// 前進
-			pos.z += MOVE_SPEED;
-		}
-		if (pKeyboard->GetPress(DIK_A))
-		{// 左
-			pos.x -= MOVE_SPEED;
-		}
-		if (pKeyboard->GetPress(DIK_D))
-		{// 右
-			pos.x += MOVE_SPEED;
-		}
-		if (pKeyboard->GetPress(DIK_S))
-		{// 手前
-			pos.z -= MOVE_SPEED;
-		}
+    if (m_bSetUp)
+    {// セットアップモード
+        pos = m_apParts[m_nIdxParts]->pParts->GetPosOrg();
 
-		if (pKeyboard->GetPress(DIK_E))
-		{// 上
-			pos.y += MOVE_SPEED;
-		}
-		if (pKeyboard->GetPress(DIK_Q))
-		{// 下
-			pos.y -= MOVE_SPEED;
-		}
+        ImGui::DragFloat("posOrg.x", &pos.x, 0.1f, -FLT_MAX, FLT_MAX);
+        ImGui::DragFloat("posOrg.y", &pos.y, 0.1f, -FLT_MAX, FLT_MAX);
+        ImGui::DragFloat("posOrg.z", &pos.z, 0.1f, -FLT_MAX, FLT_MAX);
 
-		// 位置設定
-		m_apParts[m_nIdxParts]->pParts->SetPosOrg(m_apParts[m_nIdxParts]->pParts->GetPosOrg() + pos);
-		m_apParts[m_nIdxParts]->pParts->SetPosition(m_apParts[m_nIdxParts]->pParts->GetPosOrg());
-	}
-	else
-	{// モーションモードの入力
-		if (pKeyboard->GetTrigger(DIK_RIGHT))
-		{// モーションの選択
-			m_motionType = (m_motionType + 1) % m_nNumMotion;
-			SetMotion(m_motionType);
+        // 位置設定
+        m_apParts[m_nIdxParts]->pParts->SetPosOrg(pos);
+        m_apParts[m_nIdxParts]->pParts->SetPosition(pos);
+    }
+    else
+    {// モーションモード
+        if (pKeyboard->GetTrigger(DIK_RIGHT))
+        {// モーションの選択
+            m_motionType = (m_motionType + 1) % m_nNumMotion;
+            SetMotion(m_motionType);
 
-			if (m_bMotion == false)
-			{
-				// ポーズ初期設定
-				InitPose(m_motionType);
-			}
-		}
-		else if (pKeyboard->GetTrigger(DIK_LEFT))
-		{
-			m_motionType = (m_motionType + m_nNumMotion - 1) % m_nNumMotion;
-			SetMotion(m_motionType);
+            if (m_bMotion == false)
+            {
+                // ポーズ初期設定
+                InitPose(m_motionType);
+            }
+        }
+        else if (pKeyboard->GetTrigger(DIK_LEFT))
+        {
+            m_motionType = (m_motionType + m_nNumMotion - 1) % m_nNumMotion;
+            SetMotion(m_motionType);
 
-			if (m_bMotion == false)
-			{
-				// ポーズ初期設定
-				InitPose(m_motionType);
-			}
-		}
+            if (m_bMotion == false)
+            {
+                // ポーズ初期設定
+                InitPose(m_motionType);
+            }
+        }
 
-		if (pKeyboard->GetTrigger(DIK_2))
-		{// キーの選択
-			m_nKey = (m_nKey + 1) % m_aMotionInfo[m_motionType].nNumKey;
+        if (pKeyboard->GetTrigger(DIK_2))
+        {// キーの選択
+            m_nKey = (m_nKey + 1) % m_aMotionInfo[m_motionType].nNumKey;
 
-			// ポーズ初期設定
-			SetPose();
+            // ポーズ初期設定
+            SetPose();
 
-			m_nFrame = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame;
-		}
-		else if (pKeyboard->GetTrigger(DIK_1))
-		{
-			m_nKey = (m_nKey + m_aMotionInfo[m_motionType].nNumKey - 1) % m_aMotionInfo[m_motionType].nNumKey;
+            m_nFrame = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame;
+        }
+        else if (pKeyboard->GetTrigger(DIK_1))
+        {
+            m_nKey = (m_nKey + m_aMotionInfo[m_motionType].nNumKey - 1) % m_aMotionInfo[m_motionType].nNumKey;
 
-			// ポーズ初期設定
-			SetPose();
+            // ポーズ初期設定
+            SetPose();
 
-			m_nFrame = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame;
-		}
-		// 選択============================================
+            m_nFrame = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame;
+        }
+        // 選択============================================
 
-		// キーの増減============================================
-		if (pKeyboard->GetTrigger(DIK_I))
-		{// キーを増やす
-			if (m_nNumKey < motion::MAX_KEY - 1)
-			{
-				m_nNumKey++;
-				m_aMotionInfo[m_motionType].nNumKey++;
-			}
-		}
-		else if (pKeyboard->GetTrigger(DIK_K))
-		{// キーを減らす
-			if (m_nNumKey > 0)
-			{
-				m_nNumKey--;
-				m_aMotionInfo[m_motionType].nNumKey--;
-			}
-		}
-		// キーの増減============================================
+        // キーの増減============================================
+        if (pKeyboard->GetTrigger(DIK_I))
+        {// キーを増やす
+            if (m_nNumKey < motion::MAX_KEY - 1)
+            {
+                m_nNumKey++;
+                m_aMotionInfo[m_motionType].nNumKey++;
+            }
+        }
+        else if (pKeyboard->GetTrigger(DIK_K))
+        {// キーを減らす
+            if (m_nNumKey > 0)
+            {
+                m_nNumKey--;
+                m_aMotionInfo[m_motionType].nNumKey--;
+            }
+        }
+        // キーの増減============================================
 
-		// フレームの増減============================================
-		if (m_nKey != -1)
-		{
-			if (pKeyboard->GetRepeat(DIK_O) % 5 == 0 && pKeyboard->GetRepeat(DIK_O) != 0)
-			{// フレームを増やす
-				m_nFrame++;
-				m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame++;
-			}
-			else if (pKeyboard->GetRepeat(DIK_L) % 5 == 0 && pKeyboard->GetRepeat(DIK_L) != 0)
-			{// フレームを減らす
-				m_nFrame--;
-				m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame--;
+        // フレームの増減============================================
+        if (m_nKey != -1)
+        {
+            if (pKeyboard->GetRepeat(DIK_O) % 5 == 0 && pKeyboard->GetRepeat(DIK_O) != 0)
+            {// フレームを増やす
+                m_nFrame++;
+                m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame++;
+            }
+            else if (pKeyboard->GetRepeat(DIK_L) % 5 == 0 && pKeyboard->GetRepeat(DIK_L) != 0)
+            {// フレームを減らす
+                m_nFrame--;
+                m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame--;
 
-				if (m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame < 1)
-				{
-					m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame = 1;
-					m_nFrame = 1;
-				}
-			}
-		}
-		// フレームの増減============================================
+                if (m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame < 1)
+                {
+                    m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].nFrame = 1;
+                    m_nFrame = 1;
+                }
+            }
+        }
+        // フレームの増減============================================
 
-		// キーのコピペ============================================
-		if (pKeyboard->GetTrigger(DIK_F6))
-		{// コピー
-			m_keyInfoTemp = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey];
-		}
-		if (pKeyboard->GetTrigger(DIK_F7))
-		{// ペースト
-			m_aMotionInfo[m_motionType].aKeyInfo[m_nKey] = m_keyInfoTemp;
+        // キーのコピペ============================================
+        if (pKeyboard->GetTrigger(DIK_F6))
+        {// コピー
+            m_keyInfoTemp = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey];
+        }
+        if (pKeyboard->GetTrigger(DIK_F7))
+        {// ペースト
+            m_aMotionInfo[m_motionType].aKeyInfo[m_nKey] = m_keyInfoTemp;
 
-			// ポーズ初期設定
-			SetPose();
-		}
-		if (pKeyboard->GetTrigger(DIK_RETURN))
-		{// ポーズリセット
-			ZeroMemory(&m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey, sizeof(KEY) * motion::MAX_PARTS);
+            // ポーズ初期設定
+            SetPose();
+        }
 
-			// ポーズ初期設定
-			SetPose();
-		}
-		// キーのコピペ============================================
+        if (ImGui::Button("ResetPose", ImVec2(80.0f, 20.0f)) && m_nKey != -1)
+        {// ポーズリセット
+            ZeroMemory(&m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey, sizeof(KEY) * motion::MAX_PARTS);
 
-		// パーツの動き============================================
-		pos = m_apParts[m_nIdxParts]->pParts->GetPosition();
-		// 移動=======================
-		if (pKeyboard->GetPress(DIK_W))
-		{// Z軸移動
-			pos.z += MOVE_SPEED;
+            // ポーズ初期設定
+            SetPose();
+        }
 
-			// パーツのトランスフォームを一時保存
-			SetTransform();
-
-			m_apParts[m_nIdxParts]->pParts->SetPosition(pos);
-		}
-		else if (pKeyboard->GetPress(DIK_S))
-		{
-			pos.z -= MOVE_SPEED;
-
-			// パーツのトランスフォームを一時保存
-			SetTransform();
-
-			m_apParts[m_nIdxParts]->pParts->SetPosition(pos);
-		}
-		if (pKeyboard->GetPress(DIK_D))
-		{// X軸移動
-			pos.x += MOVE_SPEED;
-
-			// パーツのトランスフォームを一時保存
-			SetTransform();
-
-			m_apParts[m_nIdxParts]->pParts->SetPosition(pos);
-		}
-		else if (pKeyboard->GetPress(DIK_A))
-		{
-			pos.x -= MOVE_SPEED;
-
-			// パーツのトランスフォームを一時保存
-			SetTransform();
-
-			m_apParts[m_nIdxParts]->pParts->SetPosition(pos);
-		}
-		if (pKeyboard->GetPress(DIK_E))
-		{// Y軸移動
-			pos.y += MOVE_SPEED;
-
-			// パーツのトランスフォームを一時保存
-			SetTransform();
-
-			m_apParts[m_nIdxParts]->pParts->SetPosition(pos);
-		}
-		else if (pKeyboard->GetPress(DIK_Q))
-		{
-			pos.y -= MOVE_SPEED;
-
-			// パーツのトランスフォームを一時保存
-			SetTransform();
-
-			m_apParts[m_nIdxParts]->pParts->SetPosition(pos);
-		}
-		// 移動=======================
-
+        pos = m_apParts[m_nIdxParts]->pParts->GetPosition();
         rot = m_apParts[m_nIdxParts]->pParts->GetRot();
 
-        // 回転
-        ImGui::DragFloat("rot.x", &rot.x, 0.01f, -D3DX_PI, D3DX_PI);
-        ImGui::DragFloat("rot.y", &rot.y, 0.01f, -D3DX_PI, D3DX_PI);
-        ImGui::DragFloat("rot.z", &rot.z, 0.01f, -D3DX_PI, D3DX_PI);
+        if (ImGui::TreeNode("Parts Transform"))
+        {
+            // 移動
+            if (ImGui::DragFloat("pos.x", &pos.x, 0.1f, -FLT_MAX, FLT_MAX) ||
+                ImGui::DragFloat("pos.y", &pos.y, 0.1f, -FLT_MAX, FLT_MAX) ||
+                ImGui::DragFloat("pos.z", &pos.z, 0.1f, -FLT_MAX, FLT_MAX))
+            {
+                // パーツのトランスフォームを一時保存
+                SetTransform();
 
+                m_apParts[m_nIdxParts]->pParts->SetPosition(pos);
+            }
 
-        // パーツのトランスフォームを一時保存
-        SetTransform();
-	}
+            // 回転
+            if (ImGui::DragFloat("rot.x", &rot.x, 0.01f, -D3DX_PI, D3DX_PI) ||
+                ImGui::DragFloat("rot.y", &rot.y, 0.01f, -D3DX_PI, D3DX_PI) ||
+                ImGui::DragFloat("rot.z", &rot.z, 0.01f, -D3DX_PI, D3DX_PI))
+            {
+                // パーツのトランスフォームを一時保存
+                SetTransform();
+            }
 
-	// トランスフォーム設定
-	m_apParts[m_nIdxParts]->pParts->SetRot(rot);
+            ImGui::TreePop();
+        }
+
+    }
+
+    // トランスフォーム設定
+    m_apParts[m_nIdxParts]->pParts->SetRot(rot);
 }
 
 //=====================================================
@@ -840,6 +784,11 @@ void CMotion::DrawMotionState(void)
 //=====================================================
 void CMotion::SetPose(void)
 {
+    if (m_nKey == -1)
+    {
+        return;
+    }
+
 	D3DXVECTOR3 rot = { 0.0f,0.0f,0.0f };
 	D3DXVECTOR3 pos = { 0.0f,0.0f,0.0f };
 
@@ -1278,7 +1227,7 @@ void CMotion::SaveMotion(void)
 {
 	FILE *pFile = NULL;
 
-	pFile = fopen("data\\motion.txt", "w");
+	pFile = fopen(m_aPathSave, "w");
 
 	if (pFile != NULL)
 	{
@@ -1375,12 +1324,18 @@ void CMotion::SaveMotion(void)
 					fprintf(pFile, "        KEY # -----[%d]----\n", nCntParts);
 					fprintf(pFile, "            POS = %.2f %.2f %.2f\n", pos.x, pos.y, pos.z);
 					fprintf(pFile, "            ROT = %.2f %.2f %.2f\n", rot.x, rot.y, rot.z);
+
+
 					fprintf(pFile, "        END_KEY\n");
 				}
+
 				fprintf(pFile, "    END_KEYSET\n");
 			}
+
+
 			fprintf(pFile, "END_MOTIONSET\n");
 		}
+
 
 		fprintf(pFile, "END_SCRIPT\n");
 	}
