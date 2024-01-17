@@ -74,11 +74,7 @@ void CDebugProc::Init(void)
 	D3DXCreateFont(pDevice, 18, 0, 0, 0, FALSE, SHIFTJIS_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Terminal", &m_pFont);
 
 	//初期表示設定
-#if _DEBUG
 	m_bDisp = true;
-#else NDEBUG
-	m_bDisp = false;
-#endif
 }
 
 //==========================================================
@@ -101,7 +97,6 @@ void CDebugProc::Uninit(void)
 //==========================================================
 void CDebugProc::Update(void)
 {
-#ifdef _DEBUG
 	CInputKeyboard *pInputKeyboard = CInputKeyboard::GetInstance();	// キーボードのポインタ
 
 	if (pInputKeyboard != nullptr)
@@ -111,7 +106,6 @@ void CDebugProc::Update(void)
 			m_bDisp = m_bDisp ? false : true;
 		}
 	}
-#endif
 }
 
 //==========================================================

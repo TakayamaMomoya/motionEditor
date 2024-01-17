@@ -221,6 +221,7 @@ void CRenderer::Draw(void)
 	// •`‰æŠJŽn
 	if (SUCCEEDED(m_pD3DDevice->BeginScene()))
 	{// •`‰æˆ—
+
 		// FPS•\Ž¦
 		DrawFPS();
 		
@@ -228,6 +229,10 @@ void CRenderer::Draw(void)
 		CObject::DrawAll();
 
 		CDebugProc::GetInstance()->Draw();
+
+        // imgui•`‰æ
+        ImGui::Render();
+        ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 
 		// •`‰æI—¹
 		m_pD3DDevice->EndScene();
