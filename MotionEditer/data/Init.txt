@@ -1,1 +1,1 @@
-data\\motion.txt
+data\\MOTION\\robot00.txt

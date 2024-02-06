@@ -270,7 +270,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 
 		break;
-
 	}
 
     ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);

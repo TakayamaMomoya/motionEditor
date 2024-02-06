@@ -52,6 +52,9 @@ public:
 	{// パーティクル情報構造体
 		int nKey;	//生成するキー
 		int nFrame;	//生成するフレーム
+        float fNumFrame;    // 持続フレーム
+        float fTimer;    // 持続タイマー
+        float fRadius;    // 半径
 		D3DXVECTOR3 offset;	// オフセット位置
 		int nIdxParent;	// 親となるパーツの番号
 	}EVENT_INFO;

@@ -19,6 +19,7 @@
 #include "inputkeyboard.h"
 #include "inputmouse.h"
 #include <string.h>
+#include "effect3D.h"
 
 //*****************************************************
 // マクロ定義
@@ -165,6 +166,21 @@ void CMotion::Input(void)
         }
     }
 
+    m_apParts[m_nIdxParts]->pParts->SetCurrent(false);
+
+    if (ImGui::SliderInt("Parts", &m_nIdxParts, 0, m_nNumParts - 1))
+    {
+        SetMotion(m_motionType);
+
+        if (m_bMotion == false)
+        {
+            // ポーズ初期設定
+            InitPose(m_motionType);
+        }
+    }
+
+    m_apParts[m_nIdxParts]->pParts->SetCurrent(true);
+
     if (ImGui::Button("PATRS_UP", ImVec2(100.0f, 20.0f)))
     {// パーツ切り替え
         m_apParts[m_nIdxParts]->pParts->SetCurrent(false);
@@ -197,28 +213,6 @@ void CMotion::Input(void)
     }
     else
     {// モーションモード
-        if (pKeyboard->GetTrigger(DIK_RIGHT))
-        {// モーションの選択
-            m_motionType = (m_motionType + 1) % m_nNumMotion;
-            SetMotion(m_motionType);
-
-            if (m_bMotion == false)
-            {
-                // ポーズ初期設定
-                InitPose(m_motionType);
-            }
-        }
-        else if (pKeyboard->GetTrigger(DIK_LEFT))
-        {
-            m_motionType = (m_motionType + m_nNumMotion - 1) % m_nNumMotion;
-            SetMotion(m_motionType);
-
-            if (m_bMotion == false)
-            {
-                // ポーズ初期設定
-                InitPose(m_motionType);
-            }
-        }
 
         if (pKeyboard->GetTrigger(DIK_2))
         {// キーの選択
@@ -281,17 +275,53 @@ void CMotion::Input(void)
         }
         // フレームの増減============================================
 
-        // キーのコピペ============================================
-        if (pKeyboard->GetTrigger(DIK_F6))
-        {// コピー
-            m_keyInfoTemp = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey];
-        }
-        if (pKeyboard->GetTrigger(DIK_F7))
-        {// ペースト
-            m_aMotionInfo[m_motionType].aKeyInfo[m_nKey] = m_keyInfoTemp;
+        if (ImGui::SliderInt("Motion", &m_motionType, 0, m_nNumMotion - 1))
+        {
+            SetMotion(m_motionType);
 
-            // ポーズ初期設定
-            SetPose();
+            if (m_bMotion == false)
+            {
+                // ポーズ初期設定
+                InitPose(m_motionType);
+            }
+        }
+
+        if (ImGui::TreeNode("Key"))
+        {
+            if (ImGui::Button("CopyKey", ImVec2(80.0f, 20.0f)) && m_nKey != -1)
+            {// キーコピー
+                m_keyInfoTemp = m_aMotionInfo[m_motionType].aKeyInfo[m_nKey];
+            }
+
+            if (ImGui::Button("PasteKey", ImVec2(80.0f, 20.0f)) && m_nKey != -1)
+            {// キーペースト
+                m_aMotionInfo[m_motionType].aKeyInfo[m_nKey] = m_keyInfoTemp;
+
+                // ポーズ初期設定
+                SetPose();
+            }
+
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Collision"))
+        {
+            for (int i = 0; i < m_aMotionInfo[m_motionType].nNumEvent; i++)
+            {
+                if (m_aMotionInfo[m_motionType].pEvent == nullptr)
+                    break;
+
+                ImGui::DragInt("Key", &m_aMotionInfo[m_motionType].pEvent[i].nKey, 1, 0, m_aMotionInfo[m_motionType].nNumKey - 1);
+                ImGui::DragInt("Frame", &m_aMotionInfo[m_motionType].pEvent[i].nFrame, 1, 0, m_aMotionInfo[m_motionType].aKeyInfo[m_aMotionInfo[m_motionType].pEvent[i].nKey].nFrame - 1);
+                ImGui::DragFloat("NumFrame", &m_aMotionInfo[m_motionType].pEvent[i].fNumFrame, 1.0f, 0, FLT_MAX);
+                ImGui::DragFloat("Radius", &m_aMotionInfo[m_motionType].pEvent[i].fRadius, 0.1f, 0, FLT_MAX);
+                ImGui::DragInt("IdxParent", &m_aMotionInfo[m_motionType].pEvent[i].nIdxParent, 1, 0, m_nNumParts - 1);
+                ImGui::DragFloat("Offset.x", &m_aMotionInfo[m_motionType].pEvent[i].offset.x, 0.1f, 0, FLT_MAX);
+                ImGui::DragFloat("Offset.y", &m_aMotionInfo[m_motionType].pEvent[i].offset.y, 0.1f, 0, FLT_MAX);
+                ImGui::DragFloat("Offset.z", &m_aMotionInfo[m_motionType].pEvent[i].offset.z, 0.1f, 0, FLT_MAX);
+            }
+
+            ImGui::TreePop();
         }
 
         if (ImGui::Button("ResetPose", ImVec2(80.0f, 20.0f)) && m_nKey != -1)
@@ -361,9 +391,32 @@ void CMotion::Motion(void)
 		{
 			if (m_nKey == m_aMotionInfo[m_motionType].pEvent[nCntEvent].nKey &&
 				m_nCounterMotion == m_aMotionInfo[m_motionType].pEvent[nCntEvent].nFrame)
-			{// イベントの呼び出し
-				Event(&m_aMotionInfo[m_motionType].pEvent[nCntEvent]);
+			{// イベントの開始
+                m_aMotionInfo[m_motionType].pEvent[nCntEvent].fTimer = 0.0f;
 			}
+
+            if (m_aMotionInfo[m_motionType].pEvent[nCntEvent].fTimer <= m_aMotionInfo[m_motionType].pEvent[nCntEvent].fNumFrame)
+            {// イベントの呼び出し
+                Event(&m_aMotionInfo[m_motionType].pEvent[nCntEvent]);
+
+                D3DXMATRIX mtxParent = *GetParts(m_aMotionInfo[m_motionType].pEvent[nCntEvent].nIdxParent)->pParts->GetMatrix();
+                D3DXMATRIX mtx;
+
+                universal::SetOffSet(&mtx, mtxParent, m_aMotionInfo[m_motionType].pEvent[nCntEvent].offset);
+
+                D3DXVECTOR3 pos =
+                {
+                    mtx._41,
+                    mtx._42,
+                    mtx._43
+                };
+
+                float fRadius = m_aMotionInfo[m_motionType].pEvent[nCntEvent].fRadius;
+
+                CEffect3D::Create(pos, fRadius, 10, D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+
+                m_aMotionInfo[m_motionType].pEvent[nCntEvent].fTimer += 1.0f;
+            }
 		}
 	}
 
@@ -997,6 +1050,22 @@ void CMotion::Load(char *pPath)
 								(void)fscanf(pFile, "%d", &m_aMotionInfo[m_nNumMotion].pEvent[nCntEvent].nFrame);
 							}
 
+                            if (strcmp(cTemp, "NUM_FRAME") == 0)
+                            {// 再生フレーム数取得
+                                (void)fscanf(pFile, "%s", &cTemp[0]);
+
+                                (void)fscanf(pFile, "%f", &m_aMotionInfo[m_nNumMotion].pEvent[nCntEvent].fNumFrame);
+
+                                m_aMotionInfo[m_nNumMotion].pEvent[nCntEvent].fTimer = FLT_MAX;
+                            }
+
+                            if (strcmp(cTemp, "RADIUS") == 0)
+                            {// 半径
+                                (void)fscanf(pFile, "%s", &cTemp[0]);
+
+                                (void)fscanf(pFile, "%f", &m_aMotionInfo[m_nNumMotion].pEvent[nCntEvent].fRadius);
+                            }
+
 							if (strcmp(cTemp, "POS") == 0)
 							{//位置読み込み
 								D3DXVECTOR3 pos;
@@ -1295,13 +1364,17 @@ void CMotion::SaveMotion(void)
 
 					fprintf(pFile, "    EVENTSET\n");
 					fprintf(pFile, "        KEY = %d\n", m_aMotionInfo[nCntMotion].pEvent[nCntParticle].nKey);
-					fprintf(pFile, "        FRAME = %d\n", m_aMotionInfo[nCntMotion].pEvent[nCntParticle].nFrame);
+                    fprintf(pFile, "        FRAME = %d\n", m_aMotionInfo[nCntMotion].pEvent[nCntParticle].nFrame);
+                    fprintf(pFile, "        NUM_FRAME = %f\n", m_aMotionInfo[nCntMotion].pEvent[nCntParticle].fNumFrame);
+                    fprintf(pFile, "        RADIUS = %f\n", m_aMotionInfo[nCntMotion].pEvent[nCntParticle].fRadius);
+                    fprintf(pFile, "        PARENT = %d\n", m_aMotionInfo[nCntMotion].pEvent[nCntParticle].nIdxParent);
+                    D3DXVECTOR3 pos = m_aMotionInfo[nCntMotion].pEvent[nCntParticle].offset;
+                    fprintf(pFile, "        POS = %f %f %f\n", pos.x, pos.y, pos.z);
 					fprintf(pFile, "    END_EVENTSET\n");
 				}
 			}
 
 			fprintf(pFile, "\n");
-
 
 			for (int nCntKey = 0; nCntKey < m_aMotionInfo[nCntMotion].nNumKey; nCntKey++)
 			{// キー情報書き出し
@@ -1338,7 +1411,7 @@ void CMotion::SaveMotion(void)
 
 
 		fprintf(pFile, "END_SCRIPT\n");
-	}
 
-	fclose(pFile);
+        fclose(pFile);
+	}
 }
