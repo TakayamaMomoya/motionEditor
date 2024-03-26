@@ -316,9 +316,9 @@ void CMotion::Input(void)
                 ImGui::DragFloat("NumFrame", &m_aMotionInfo[m_motionType].pEvent[i].fNumFrame, 1.0f, 0, FLT_MAX);
                 ImGui::DragFloat("Radius", &m_aMotionInfo[m_motionType].pEvent[i].fRadius, 0.1f, 0, FLT_MAX);
                 ImGui::DragInt("IdxParent", &m_aMotionInfo[m_motionType].pEvent[i].nIdxParent, 1, 0, m_nNumParts - 1);
-                ImGui::DragFloat("Offset.x", &m_aMotionInfo[m_motionType].pEvent[i].offset.x, 0.1f, 0, FLT_MAX);
-                ImGui::DragFloat("Offset.y", &m_aMotionInfo[m_motionType].pEvent[i].offset.y, 0.1f, 0, FLT_MAX);
-                ImGui::DragFloat("Offset.z", &m_aMotionInfo[m_motionType].pEvent[i].offset.z, 0.1f, 0, FLT_MAX);
+                ImGui::DragFloat("Offset.x", &m_aMotionInfo[m_motionType].pEvent[i].offset.x, 0.1f, -FLT_MAX, FLT_MAX);
+                ImGui::DragFloat("Offset.y", &m_aMotionInfo[m_motionType].pEvent[i].offset.y, 0.1f, -FLT_MAX, FLT_MAX);
+                ImGui::DragFloat("Offset.z", &m_aMotionInfo[m_motionType].pEvent[i].offset.z, 0.1f, -FLT_MAX, FLT_MAX);
             }
 
             ImGui::TreePop();
@@ -375,9 +375,6 @@ void CMotion::Motion(void)
 	{
 		return;
 	}
-
-	// åªç›ÇÃà íuÇï€ë∂
-	m_posOld = m_pos;
 
 	//ïœêîêÈåæ
 	int nNextKey;

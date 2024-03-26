@@ -102,19 +102,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hInstancePrev, LPSTR lpCmdLine
     // Imguiの初期化
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.DisplaySize = ImVec2(SCREEN_WIDTH, SCREEN_HEIGHT);
     bool bDisp = false;
 
-    //// Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    ImGui::StyleColorsLight();
 
     LPDIRECT3DDEVICE9 pDevice = CRenderer::GetInstance()->GetDevice();
-
-    // Setup Platform/Renderer backends
     ImGui_ImplDX9_Init(CRenderer::GetInstance()->GetDevice());
     ImGui_ImplWin32_Init(hWnd);
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -172,20 +167,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hInstancePrev, LPSTR lpCmdLine
                     ImGui_ImplDX9_NewFrame();
                     ImGui::NewFrame();
 
-                    //ImGui::SetNextWindowSize(ImVec2(SCREEN_WIDTH, SCREEN_HEIGHT));
+                    ImGui::SetNextWindowPos(ImVec2(720, 60),ImGuiCond_Appearing);
 
-                    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-                    {
-                        static float f = 0.0f;
-                        static int counter = 0;
+                    ImGui::SetNextWindowSize(ImVec2(500, 500), ImGuiCond_Appearing);
 
-                        ImGui::Begin("Motion");
+                    static float f = 0.0f;
+                    static int counter = 0;
 
-                        // 更新処理
-                        pManager->Update();
+                    ImGui::Begin("Motion");
 
-                        ImGui::End();
-                    }
+                    // 更新処理
+                    pManager->Update();
+
+                    ImGui::End();
 
 					// 描画処理
 					pManager->Draw();
