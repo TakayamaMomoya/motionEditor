@@ -332,38 +332,39 @@ void CMotion::Input(void)
             SetPose();
         }
 
-        pos = m_apParts[m_nIdxParts]->pParts->GetPosition();
-        rot = m_apParts[m_nIdxParts]->pParts->GetRot();
 
         if (ImGui::TreeNode("Parts Transform"))
         {
-            // 移動
-            if (ImGui::DragFloat("pos.x", &pos.x, 0.1f, -FLT_MAX, FLT_MAX) ||
-                ImGui::DragFloat("pos.y", &pos.y, 0.1f, -FLT_MAX, FLT_MAX) ||
-                ImGui::DragFloat("pos.z", &pos.z, 0.1f, -FLT_MAX, FLT_MAX))
+            for (int i = 0; i < m_nNumParts; i++)
             {
-                // パーツのトランスフォームを一時保存
-                SetTransform();
+                pos = m_apParts[i]->pParts->GetPosition();
+                rot = m_apParts[i]->pParts->GetRot();
 
-                m_apParts[m_nIdxParts]->pParts->SetPosition(pos);
-            }
+                if (ImGui::DragFloat("pos.x", &pos.x, 0.1f, -FLT_MAX, FLT_MAX) ||
+                    ImGui::DragFloat("pos.y", &pos.y, 0.1f, -FLT_MAX, FLT_MAX) ||
+                    ImGui::DragFloat("pos.z", &pos.z, 0.1f, -FLT_MAX, FLT_MAX))
+                {// 移動
+                    // パーツのトランスフォームを一時保存
+                    SetTransform(i);
 
-            // 回転
-            if (ImGui::DragFloat("rot.x", &rot.x, 0.01f, -D3DX_PI, D3DX_PI) ||
-                ImGui::DragFloat("rot.y", &rot.y, 0.01f, -D3DX_PI, D3DX_PI) ||
-                ImGui::DragFloat("rot.z", &rot.z, 0.01f, -D3DX_PI, D3DX_PI))
-            {
-                // パーツのトランスフォームを一時保存
-                SetTransform();
+                    m_apParts[i]->pParts->SetPosition(pos);
+                }
+
+                if (ImGui::DragFloat("rot.x", &rot.x, 0.01f, -D3DX_PI, D3DX_PI) ||
+                    ImGui::DragFloat("rot.y", &rot.y, 0.01f, -D3DX_PI, D3DX_PI) ||
+                    ImGui::DragFloat("rot.z", &rot.z, 0.01f, -D3DX_PI, D3DX_PI))
+                {// 回転
+                    // パーツのトランスフォームを一時保存
+                    SetTransform(i);
+                }
             }
 
             ImGui::TreePop();
         }
-
     }
 
     // トランスフォーム設定
-    m_apParts[m_nIdxParts]->pParts->SetRot(rot);
+    //m_apParts[m_nIdxParts]->pParts->SetRot(rot);
 }
 
 //=====================================================
@@ -371,6 +372,7 @@ void CMotion::Input(void)
 //=====================================================
 void CMotion::Motion(void)
 {
+
 	if (m_apParts[0] == nullptr)
 	{
 		return;
@@ -631,22 +633,27 @@ void CMotion::Reset(void)
 //=====================================================
 // パーツのトランスフォーム設定
 //=====================================================
-void CMotion::SetTransform(void)
+void CMotion::SetTransform(int nIdx)
 {
 	if (m_nKey == -1)
 	{
 		return;
 	}
 
+    if (nIdx == -1)
+    {
+        nIdx = m_nIdxParts;
+    }
+
 	// 向きの設定
-	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[m_nIdxParts].fRotX = m_apParts[m_nIdxParts]->pParts->GetRot().x;
-	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[m_nIdxParts].fRotY = m_apParts[m_nIdxParts]->pParts->GetRot().y;
-	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[m_nIdxParts].fRotZ = m_apParts[m_nIdxParts]->pParts->GetRot().z;
+	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[nIdx].fRotX = m_apParts[nIdx]->pParts->GetRot().x;
+	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[nIdx].fRotY = m_apParts[nIdx]->pParts->GetRot().y;
+	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[nIdx].fRotZ = m_apParts[nIdx]->pParts->GetRot().z;
 
 	// 位置の設定
-	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[m_nIdxParts].fPosX = m_apParts[m_nIdxParts]->pParts->GetPosition().x - m_apParts[m_nIdxParts]->pParts->GetPosOrg().x;
-	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[m_nIdxParts].fPosY = m_apParts[m_nIdxParts]->pParts->GetPosition().y - m_apParts[m_nIdxParts]->pParts->GetPosOrg().y;
-	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[m_nIdxParts].fPosZ = m_apParts[m_nIdxParts]->pParts->GetPosition().z - m_apParts[m_nIdxParts]->pParts->GetPosOrg().z;
+	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[nIdx].fPosX = m_apParts[nIdx]->pParts->GetPosition().x - m_apParts[nIdx]->pParts->GetPosOrg().x;
+	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[nIdx].fPosY = m_apParts[nIdx]->pParts->GetPosition().y - m_apParts[nIdx]->pParts->GetPosOrg().y;
+	m_aMotionInfo[m_motionType].aKeyInfo[m_nKey].aKey[nIdx].fPosZ = m_apParts[nIdx]->pParts->GetPosition().z - m_apParts[nIdx]->pParts->GetPosOrg().z;
 }
 
 //=====================================================

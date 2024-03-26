@@ -171,9 +171,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hInstancePrev, LPSTR lpCmdLine
 
                     ImGui::SetNextWindowSize(ImVec2(500, 500), ImGuiCond_Appearing);
 
-                    static float f = 0.0f;
-                    static int counter = 0;
-
                     ImGui::Begin("Motion");
 
                     // çXêVèàóù

@@ -133,7 +133,7 @@ private:
 	void Input(void);
 	void DrawMotionState(void);
 	void SetPose(void);
-	void SetTransform(void);
+	void SetTransform(int nIdx = -1);
 	void SaveMotion(void);
 	void Reset(void);
 
