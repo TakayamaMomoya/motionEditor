@@ -362,9 +362,6 @@ void CMotion::Input(void)
             ImGui::TreePop();
         }
     }
-
-    // トランスフォーム設定
-    //m_apParts[m_nIdxParts]->pParts->SetRot(rot);
 }
 
 //=====================================================
